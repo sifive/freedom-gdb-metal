@@ -4,7 +4,7 @@ include scripts/Freedom.mk
 # Include version identifiers to build up the full version string
 include Version.mk
 PACKAGE_HEADING := freedom-gdb-metal
-PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_CODELINE)$(FREEDOM_GDB_METAL_GENERATION)b$(FREEDOM_GDB_METAL_BUILD)
+PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_ID)
 
 # Source code directory references
 SRCNAME_GDB := riscv-gdb
@@ -42,12 +42,15 @@ $(OBJ_WIN64)/build/$(PACKAGE_HEADING)/libs.stamp: \
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/source.stamp:
 	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/source.stamp,%,$@))
 	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/source.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
+	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/source.stamp,%/rec/$(PACKAGE_HEADING),$@)))
 	rm -rf $($@_INSTALL)
 	mkdir -p $($@_INSTALL)
+	rm -rf $($@_REC)
+	mkdir -p $($@_REC)
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
-	cd $(dir $@); curl -L -f -s -o expat-2.2.0.tar.bz2 https://github.com/libexpat/libexpat/releases/download/R_2_2_0/expat-2.2.0.tar.bz2
-	cd $(dir $@); $(TAR) -xf expat-2.2.0.tar.bz2
+	cd $($@_REC); curl -L -f -s -o expat-2.2.0.tar.bz2 https://github.com/libexpat/libexpat/releases/download/R_2_2_0/expat-2.2.0.tar.bz2
+	cd $(dir $@); $(TAR) -xf $($@_REC)/expat-2.2.0.tar.bz2
 	cd $(dir $@); mv expat-2.2.0 expat
 	cp -a $(SRCPATH_GDB) $(dir $@)
 	date > $@
@@ -58,9 +61,10 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/expat/build.stamp: \
 		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/source.stamp
 	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/expat/build.stamp,%,$@))
 	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/expat/build.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
-	cd $(dir $@); ./configure --prefix=$(abspath $($@_INSTALL)) $($($@_TARGET)-expat-configure) &>make-configure.log
-	$(MAKE) -C $(dir $@) buildlib &>$(dir $@)/make-buildlib.log
-	$(MAKE) -C $(dir $@) -j1 installlib &>$(dir $@)/make-installlib.log
+	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/expat/build.stamp,%/rec/$(PACKAGE_HEADING),$@)))
+	cd $(dir $@); ./configure --prefix=$(abspath $($@_INSTALL)) $($($@_TARGET)-expat-configure) &>$($@_REC)/expat-make-configure.log
+	$(MAKE) -C $(dir $@) buildlib &>$($@_REC)/expat-make-buildlib.log
+	$(MAKE) -C $(dir $@) -j1 installlib &>$($@_REC)/expat-make-installlib.log
 	date > $@
 
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
@@ -69,6 +73,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%,$@))
 	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
 	$(eval $@_BUILD := $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%/build/$(PACKAGE_HEADING),$@))
+	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%/rec/$(PACKAGE_HEADING),$@)))
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -76,7 +81,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--target=$(BARE_METAL_TUPLE) \
 		$($($@_TARGET)-gdb-host) \
 		--prefix=$(abspath $($@_INSTALL)) \
-		--with-pkgversion="SiFive GDB $(PACKAGE_VERSION)" \
+		--with-pkgversion="SiFive GDB Metal $(PACKAGE_VERSION)" \
 		--with-bugurl="https://github.com/sifive/freedom-tools/issues" \
 		--disable-werror \
 		--with-python=no \
@@ -92,7 +97,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--with-gmp=no \
 		--with-expat=yes \
 		CFLAGS="-O2" \
-		CXXFLAGS="-O2" &>make-configure.log
-	$(MAKE) -C $(dir $@) &>$(dir $@)/make-build.log
-	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$(dir $@)/make-install.log
+		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-make-configure.log
+	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-make-build.log
+	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-make-install.log
 	date > $@
