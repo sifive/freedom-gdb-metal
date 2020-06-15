@@ -4,7 +4,7 @@ include scripts/Freedom.mk
 # Include version identifiers to build up the full version string
 include Version.mk
 PACKAGE_HEADING := freedom-gdb-metal
-PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_ID)
+PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_ID)$(EXTRA_SUFFIX)
 
 # Source code directory references
 SRCNAME_GDB := riscv-gdb
@@ -27,7 +27,11 @@ include scripts/Package.mk
 
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp: \
 		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp
+	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp,%,$@))
+	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/install.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
 	mkdir -p $(dir $@)
+	git log > $(abspath $($@_INSTALL))/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET).commitlog
+	cp README.md $(abspath $($@_INSTALL))/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET).readme.md
 	date > $@
 
 # We might need some extra target libraries for this package
@@ -81,7 +85,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--target=$(BARE_METAL_TUPLE) \
 		$($($@_TARGET)-gdb-host) \
 		--prefix=$(abspath $($@_INSTALL)) \
-		--with-pkgversion="SiFive GDB Metal $(PACKAGE_VERSION)" \
+		--with-pkgversion="SiFive GDB-Metal $(PACKAGE_VERSION)" \
 		--with-bugurl="https://github.com/sifive/freedom-tools/issues" \
 		--disable-werror \
 		--with-python=no \
@@ -100,4 +104,11 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-make-install.log
+	date > $@
+
+$(OBJDIR)/$(NATIVE)/test/$(PACKAGE_HEADING)/test.stamp: \
+		$(OBJDIR)/$(NATIVE)/test/$(PACKAGE_HEADING)/launch.stamp
+	mkdir -p $(dir $@)
+	PATH=$(abspath $(OBJDIR)/$(NATIVE)/launch/$(PACKAGE_TARNAME)/bin):$(PATH) riscv64-unknown-elf-gdb -v
+	@echo "Finished testing $(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(NATIVE).tar.gz tarball"
 	date > $@
