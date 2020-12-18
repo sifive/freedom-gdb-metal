@@ -27,7 +27,7 @@ $(DARWIN)-expat-configure    := --disable-shared --enable-static
 include scripts/Package.mk
 
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp: \
-		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp
+		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp
 	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp,%,$@))
 	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/install.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
 	mkdir -p $(dir $@)
@@ -75,7 +75,16 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/source.stamp:
 	cd $($@_REC); curl -L -f -s -o expat-2.2.0.tar.bz2 https://github.com/libexpat/libexpat/releases/download/R_2_2_0/expat-2.2.0.tar.bz2
 	cd $(dir $@); $(TAR) -xf $($@_REC)/expat-2.2.0.tar.bz2
 	cd $(dir $@); mv expat-2.2.0 expat
+	mkdir -p $($@_INSTALL)/python
+	cd $(dir $@); curl -L -f -s -o python-3.7.7-$($@_TARGET).tar.gz https://github.com/sifive/freedom-tools-resources/releases/download/v0-test1/python-3.7.7-$($@_TARGET).tar.gz
+	cd $($@_INSTALL)/python; $(TAR) -xf $(abspath $(dir $@))/python-3.7.7-$($@_TARGET).tar.gz
+	cd $(dir $@); rm python-3.7.7-$($@_TARGET).tar.gz
+	cp scripts/pyconfig-x86_64-apple-darwin.sh $($@_INSTALL)/python
+	cp scripts/pyconfig-x86_64-linux-centos6.sh $($@_INSTALL)/python
+	cp scripts/pyconfig-x86_64-linux-ubuntu14.sh $($@_INSTALL)/python
+	cp scripts/pyconfig-x86_64-w64-mingw32.sh $($@_INSTALL)/python
 	cp -a $(SRCPATH_GDB) $(dir $@)
+	$(SED) -E -i -f $(PATCHESDIR)/python-c-gdb.sed $(dir $@)/$(SRCNAME_GDB)/gdb/python/python.c
 	date > $@
 
 # OpenOCD requires a GDB that's been build with expat support so it can read
@@ -126,6 +135,44 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-make-install.log
+	rm -f $(abspath $($@_INSTALL))/share/doc/gdb/frame-apply.html
+	tclsh scripts/dyn-lib-check-$($@_TARGET).tcl $(abspath $($@_INSTALL))/bin/riscv64-unknown-elf-gdb
+	date > $@
+
+$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
+		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp
+	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%,$@))
+	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
+	$(eval $@_BUILD := $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%/build/$(PACKAGE_HEADING),$@))
+	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%/rec/$(PACKAGE_HEADING),$@)))
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+# CC_FOR_TARGET is required for the ld testsuite.
+	cd $(dir $@) && CC_FOR_TARGET=$(BARE_METAL_CC_FOR_TARGET) $(abspath $($@_BUILD))/$(SRCNAME_GDB)/configure \
+		--target=$(BARE_METAL_TUPLE) \
+		$($($@_TARGET)-gdb-host) \
+		--prefix=$(abspath $($@_INSTALL)) \
+		--with-pkgversion="SiFive GDB-Metal $(PACKAGE_VERSION)" \
+		--with-bugurl="https://github.com/sifive/freedom-tools/issues" \
+		--disable-werror \
+		--with-python="$(abspath $($@_INSTALL))/python/pyconfig-$($@_TARGET).sh" \
+		--program-prefix="$(BARE_METAL_TUPLE)-" \
+		--program-suffix="-py" \
+		--enable-gdb \
+		--disable-gas \
+		--disable-binutils \
+		--disable-ld \
+		--disable-gold \
+		--disable-gprof \
+		--with-included-gettext \
+		--with-mpc=no \
+		--with-mpfr=no \
+		--with-gmp=no \
+		--with-expat=yes \
+		CFLAGS="-O2" \
+		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-py-make-configure.log
+	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-py-make-build.log
+	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-py-make-install.log
 	rm -f $(abspath $($@_INSTALL))/share/doc/gdb/frame-apply.html
 	tclsh scripts/dyn-lib-check-$($@_TARGET).tcl $(abspath $($@_INSTALL))/bin/riscv64-unknown-elf-gdb
 	date > $@
