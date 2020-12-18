@@ -18,11 +18,13 @@ set dllist [list \
 	"/usr/lib/libc++" \
 	"/usr/lib/libSystem" \
 	"/usr/lib/libobjc" \
+	"/usr/lib/libncurses" \
+	"/usr/lib/liblzma" \
 ]
 
 proc dlcheck {arg} {
 	global dlcode dllist
-	
+
 	set res [exec otool -L $arg]
 	set lns [split $res "\n"]
 	foreach ln $lns {

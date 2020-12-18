@@ -88,6 +88,9 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/expat/build.stamp: \
 	cd $(dir $@); ./configure --prefix=$(abspath $($@_INSTALL)) $($($@_TARGET)-expat-configure) &>$($@_REC)/expat-make-configure.log
 	$(MAKE) -C $(dir $@) buildlib &>$($@_REC)/expat-make-buildlib.log
 	$(MAKE) -C $(dir $@) -j1 installlib &>$($@_REC)/expat-make-installlib.log
+	rm -f $(abspath $($@_INSTALL))/lib/libexpat*.dylib*
+	rm -f $(abspath $($@_INSTALL))/lib/libexpat*.so*
+	rm -f $(abspath $($@_INSTALL))/lib64/libexpat*.so*
 	date > $@
 
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
