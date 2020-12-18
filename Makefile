@@ -4,7 +4,7 @@ include scripts/Freedom.mk
 # Include version identifiers to build up the full version string
 include Version.mk
 PACKAGE_WORDING := Bare Metal GDB
-PACKAGE_HEADING := freedom-gdb-metal
+PACKAGE_HEADING := riscv64-unknown-elf-gdb
 PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_ID)$(EXTRA_SUFFIX)
 
 # Source code directory references
