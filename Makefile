@@ -174,12 +174,13 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-py-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-py-make-install.log
 	rm -f $(abspath $($@_INSTALL))/share/doc/gdb/frame-apply.html
-	tclsh scripts/dyn-lib-check-$($@_TARGET).tcl $(abspath $($@_INSTALL))/bin/riscv64-unknown-elf-gdb
+	tclsh scripts/dyn-lib-check-$($@_TARGET).tcl $(abspath $($@_INSTALL))/bin/riscv64-unknown-elf-gdb-py
 	date > $@
 
 $(OBJDIR)/$(NATIVE)/test/$(PACKAGE_HEADING)/test.stamp: \
 		$(OBJDIR)/$(NATIVE)/test/$(PACKAGE_HEADING)/launch.stamp
 	mkdir -p $(dir $@)
 	PATH=$(abspath $(OBJDIR)/$(NATIVE)/launch/$(PACKAGE_TARNAME)/bin):$(PATH) riscv64-unknown-elf-gdb -v
+	PATH=$(abspath $(OBJDIR)/$(NATIVE)/launch/$(PACKAGE_TARNAME)/bin):$(PATH) riscv64-unknown-elf-gdb-py -v
 	@echo "Finished testing $(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(NATIVE).tar.gz tarball"
 	date > $@
