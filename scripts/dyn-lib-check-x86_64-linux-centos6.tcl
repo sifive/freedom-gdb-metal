@@ -12,12 +12,15 @@ set dllist [list \
 	"libgcc_s.so" \
 	"libpthread.so" \
 	"libc.so" \
+	"libcrypt.so" \
+	"libfreebl3.so" \
+	"libnsl.so" \
 	"/lib64/ld-linux-x86-64.so" \
 ]
 
 proc dlcheck {arg} {
 	global dlcode dllist
-	
+
 	set res [exec ldd $arg]
 	set lns [split $res "\n"]
 	foreach ln $lns {
