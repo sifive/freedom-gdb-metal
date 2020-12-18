@@ -126,6 +126,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_REC)/build-gdb-make-install.log
+	rm -f $(abspath $($@_INSTALL))/share/doc/gdb/frame-apply.html
 	tclsh scripts/dyn-lib-check-$($@_TARGET).tcl $(abspath $($@_INSTALL))/bin/riscv64-unknown-elf-gdb
 	date > $@
 
