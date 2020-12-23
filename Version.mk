@@ -1,5 +1,5 @@
 # Version number, which should match the official version of the tool we are building
-RISCV_GDB_VERSION := 9.1.0
+RISCV_GDB_VERSION := 10.1.0
 
 # Customization ID, which should identify the customization added to the original by SiFive
 FREEDOM_GDB_METAL_ID := 2020.12.0-preview1
