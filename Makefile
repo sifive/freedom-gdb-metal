@@ -131,6 +131,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--with-mpfr=no \
 		--with-gmp=no \
 		--with-expat=yes \
+		--with-guile=no \
 		CFLAGS="-O2" \
 		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-make-build.log
@@ -169,6 +170,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
 		--with-mpfr=no \
 		--with-gmp=no \
 		--with-expat=yes \
+		--with-guile=no \
 		CFLAGS="-O2" \
 		CXXFLAGS="-O2" &>$($@_REC)/build-gdb-py-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_REC)/build-gdb-py-make-build.log
