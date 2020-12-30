@@ -111,6 +111,11 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%/rec/$(PACKAGE_HEADING),$@)))
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
+	# Workaround for CentOS random build fail issue
+	#
+	# Corresponding bugzilla entry on upstream:
+	# https://sourceware.org/bugzilla/show_bug.cgi?id=22941
+	touch $(abspath $($@_BUILD))/$(SRCNAME_GDB)/intl/plural.c
 # CC_FOR_TARGET is required for the ld testsuite.
 	cd $(dir $@) && CC_FOR_TARGET=$(BARE_METAL_CC_FOR_TARGET) $(abspath $($@_BUILD))/$(SRCNAME_GDB)/configure \
 		--target=$(BARE_METAL_TUPLE) \
@@ -148,6 +153,11 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
 	$(eval $@_REC := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%/rec/$(PACKAGE_HEADING),$@)))
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
+	# Workaround for CentOS random build fail issue
+	#
+	# Corresponding bugzilla entry on upstream:
+	# https://sourceware.org/bugzilla/show_bug.cgi?id=22941
+	touch $(abspath $($@_BUILD))/$(SRCNAME_GDB)/intl/plural.c
 # CC_FOR_TARGET is required for the ld testsuite.
 	cd $(dir $@) && CC_FOR_TARGET=$(BARE_METAL_CC_FOR_TARGET) $(abspath $($@_BUILD))/$(SRCNAME_GDB)/configure \
 		--target=$(BARE_METAL_TUPLE) \
