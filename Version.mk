@@ -2,8 +2,8 @@
 RISCV_GDB_VERSION := 10.1.0
 
 # Customization ID, which should identify the customization added to the original by SiFive
-FREEDOM_GDB_METAL_ID := 2020.12.1
+FREEDOM_GDB_METAL_ID := 2020.12.7
 
 # Characteristic tags, which should be usable for matching up providers and consumers
-FREEDOM_GDB_METAL_RISCV_TAGS = rv32i rv64i m a f d c v zfh
+FREEDOM_GDB_METAL_RISCV_TAGS = rv32i rv64i m a f d c v b zfh
 FREEDOM_GDB_METAL_TOOLS_TAGS = gdb-metal
