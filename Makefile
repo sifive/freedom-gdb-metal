@@ -6,6 +6,7 @@ include Version.mk
 PACKAGE_WORDING := Bare Metal GDB
 PACKAGE_HEADING := riscv64-unknown-elf-gdb
 PACKAGE_VERSION := $(RISCV_GDB_VERSION)-$(FREEDOM_GDB_METAL_ID)$(EXTRA_SUFFIX)
+PACKAGE_COMMENT := \# SiFive Freedom Package Properties File
 
 # Source code directory references
 SRCNAME_GDB := riscv-gdb
@@ -30,11 +31,12 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp: \
 		$(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp
 	$(eval $@_TARGET := $(patsubst $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp,%,$@))
 	$(eval $@_INSTALL := $(patsubst %/build/$(PACKAGE_HEADING)/install.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET),$@))
+	$(eval $@_PROPERTIES := $(patsubst %/build/$(PACKAGE_HEADING)/install.stamp,%/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET).properties,$@))
 	mkdir -p $(dir $@)
 	git log --format="[%ad] %s" > $(abspath $($@_INSTALL))/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET).changelog
 	cp README.md $(abspath $($@_INSTALL))/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$($@_TARGET).readme.md
 	rm -f $(abspath $($@_PROPERTIES))
-	echo "# SiFive Freedom Package Properties File" > $(abspath $($@_PROPERTIES))
+	echo "$(PACKAGE_COMMENT)" > $(abspath $($@_PROPERTIES))
 	echo "PACKAGE_TYPE = freedom-tools" >> $(abspath $($@_PROPERTIES))
 	echo "PACKAGE_DESC_SEG = $(PACKAGE_WORDING)" >> $(abspath $($@_PROPERTIES))
 	echo "PACKAGE_FIXED_ID = $(PACKAGE_HEADING)" >> $(abspath $($@_PROPERTIES))
@@ -48,6 +50,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/install.stamp: \
 	cp $(abspath $($@_PROPERTIES)) $(abspath $($@_INSTALL))/
 	tclsh scripts/check-maximum-path-length.tcl $(abspath $($@_INSTALL)) "$(PACKAGE_HEADING)" "$(RISCV_GDB_VERSION)" "$(FREEDOM_GDB_METAL_ID)$(EXTRA_SUFFIX)"
 	tclsh scripts/check-same-name-different-case.tcl $(abspath $($@_INSTALL))
+	echo $(PATH)
 	date > $@
 
 # We might need some extra target libraries for this package
@@ -57,10 +60,10 @@ $(OBJ_NATIVE)/build/$(PACKAGE_HEADING)/libs.stamp: \
 
 $(OBJ_WIN64)/build/$(PACKAGE_HEADING)/libs.stamp: \
 		$(OBJ_WIN64)/build/$(PACKAGE_HEADING)/install.stamp
-	$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libwinpthread*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
-	$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libgcc_s_seh*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
-	$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libstdc*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
-	$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libssp*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
+	-$(WIN64)-gcc -print-search-dirs | grep ^programs | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libwinpthread*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
+	-$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libgcc_s_seh*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
+	-$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libstdc*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
+	-$(WIN64)-gcc -print-search-dirs | grep ^libraries | cut -d= -f2- | tr : "\n" | xargs -I {} find {} -iname "libssp*.dll" | xargs cp -t $(OBJDIR)/$(WIN64)/install/$(PACKAGE_HEADING)-$(PACKAGE_VERSION)-$(WIN64)/bin
 	date > $@
 
 $(OBJDIR)/%/build/$(PACKAGE_HEADING)/source.stamp:
@@ -117,6 +120,11 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 	$(eval $@_BUILDLOG := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb/build.stamp,%/buildlog/$(PACKAGE_HEADING),$@)))
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
+	# Workaround for CentOS random build fail issue
+	#
+	# Corresponding bugzilla entry on upstream:
+	# https://sourceware.org/bugzilla/show_bug.cgi?id=22941
+	touch $(abspath $($@_BUILD))/$(SRCNAME_GDB)/intl/plural.c
 # CC_FOR_TARGET is required for the ld testsuite.
 	cd $(dir $@) && CC_FOR_TARGET=$(BARE_METAL_CC_FOR_TARGET) $(abspath $($@_BUILD))/$(SRCNAME_GDB)/configure \
 		--target=$(BARE_METAL_TUPLE) \
@@ -137,7 +145,8 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--with-mpfr=no \
 		--with-gmp=no \
 		--with-expat=yes \
-		CFLAGS="-O2" \
+		--with-guile=no \
+		CFLAGS="-O2" \			CFLAGS="-O2" \
 		CXXFLAGS="-O2" &>$($@_BUILDLOG)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_BUILDLOG)/build-gdb-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_BUILDLOG)/build-gdb-make-install.log
@@ -153,6 +162,11 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
 	$(eval $@_BUILDLOG := $(abspath $(patsubst %/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp,%/buildlog/$(PACKAGE_HEADING),$@)))
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
+	# Workaround for CentOS random build fail issue
+	#
+	# Corresponding bugzilla entry on upstream:
+	# https://sourceware.org/bugzilla/show_bug.cgi?id=22941
+	touch $(abspath $($@_BUILD))/$(SRCNAME_GDB)/intl/plural.c
 # CC_FOR_TARGET is required for the ld testsuite.
 	cd $(dir $@) && CC_FOR_TARGET=$(BARE_METAL_CC_FOR_TARGET) $(abspath $($@_BUILD))/$(SRCNAME_GDB)/configure \
 		--target=$(BARE_METAL_TUPLE) \
@@ -175,6 +189,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb-py/build.stamp: \
 		--with-mpfr=no \
 		--with-gmp=no \
 		--with-expat=yes \
+		--with-guile=no \
 		CFLAGS="-O2" \
 		CXXFLAGS="-O2" &>$($@_BUILDLOG)/build-gdb-py-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_BUILDLOG)/build-gdb-py-make-build.log
