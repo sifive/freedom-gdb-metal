@@ -146,7 +146,7 @@ $(OBJDIR)/%/build/$(PACKAGE_HEADING)/build-gdb/build.stamp: \
 		--with-gmp=no \
 		--with-expat=yes \
 		--with-guile=no \
-		CFLAGS="-O2" \			CFLAGS="-O2" \
+		CFLAGS="-O2" \
 		CXXFLAGS="-O2" &>$($@_BUILDLOG)/build-gdb-make-configure.log
 	$(MAKE) -C $(dir $@) &>$($@_BUILDLOG)/build-gdb-make-build.log
 	$(MAKE) -C $(dir $@) -j1 install install-pdf install-html &>$($@_BUILDLOG)/build-gdb-make-install.log
